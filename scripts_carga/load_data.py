@@ -369,8 +369,9 @@ def load_data(path: str, name_file: str):
             pbar.close()
 
         # Índice espacial
-        print("📊 Criando índice espacial...")
+        print("📊 Criando índices espaciais...")
         with engine.begin() as conn:
+            # Índice em geometry (para consultas espaciais gerais)
             conn.execute(
                 text(
                     "CREATE INDEX IF NOT EXISTS "
@@ -378,6 +379,17 @@ def load_data(path: str, name_file: str):
                     "ON fazendas USING GIST (geom)"
                 )
             )
+            print("   ✅ Índice idx_fazendas_geom criado (geometry)")
+            
+            # Índice em geography (otimizado para ST_DWithin e consultas por distância)
+            conn.execute(
+                text(
+                    "CREATE INDEX IF NOT EXISTS "
+                    "idx_fazendas_geom_geog "
+                    "ON fazendas USING GIST ((geom::geography))"
+                )
+            )
+            print("   ✅ Índice idx_fazendas_geom_geog criado (geography)")
 
         elapsed = time.time() - start_time
 
