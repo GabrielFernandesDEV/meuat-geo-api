@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, status, Path
 from sqlalchemy.orm import Session
 from typing import List
 from app.controllers.fazenda_controller import FazendaController, NOT_FOUND_RESPONSE
-from app.schemas.fazenda_schema import FazendaResponse, PontoBuscaRequest
+from app.schemas.fazenda_schema import FazendaResponse, PontoBuscaRequest, RaioBuscaRequest
 from app.infrastructure.database import get_db
 
 router = APIRouter(
@@ -66,5 +66,35 @@ async def buscar_fazendas_por_ponto(
         db, 
         request.latitude, 
         request.longitude
+    )
+
+
+@router.post(
+    "/busca-raio",
+    response_model=List[FazendaResponse],
+    status_code=status.HTTP_200_OK,
+    summary="Buscar Fazendas por Raio",
+    description="Recebe coordenadas (latitude/longitude) e raio em quilômetros, retorna todas as fazendas dentro desse raio"
+)
+async def buscar_fazendas_por_raio(
+    request: RaioBuscaRequest,
+    db: Session = Depends(get_db)
+) -> List[FazendaResponse]:
+    """
+    Endpoint para buscar fazendas dentro de um raio específico
+    
+    Args:
+        request: Objeto contendo latitude, longitude do ponto central e raio em quilômetros
+        db: Sessão do banco de dados (injetada automaticamente)
+        
+    Returns:
+        List[FazendaResponse]: Lista de fazendas dentro do raio especificado
+        (pode retornar lista vazia se nenhuma fazenda estiver dentro do raio)
+    """
+    return FazendaController.get_fazendas_by_radius(
+        db,
+        request.latitude,
+        request.longitude,
+        request.raio_km
     )
 

@@ -104,3 +104,22 @@ class PontoBuscaRequest(BaseModel):
             }
         }
     }
+
+
+class RaioBuscaRequest(BaseModel):
+    """
+    Schema de request para busca de fazendas por raio (coordenadas + raio em quilômetros)
+    """
+    latitude: float = Field(..., ge=-90, le=90, description="Latitude do ponto central (entre -90 e 90)")
+    longitude: float = Field(..., ge=-180, le=180, description="Longitude do ponto central (entre -180 e 180)")
+    raio_km: float = Field(..., gt=0, description="Raio de busca em quilômetros (deve ser maior que 0)")
+    
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "latitude": -23.5505,
+                "longitude": -46.6333,
+                "raio_km": 50
+            }
+        }
+    }

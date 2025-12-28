@@ -93,4 +93,36 @@ class FazendaController:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Erro ao buscar fazendas por ponto: {str(e)}"
             )
+    
+    @staticmethod
+    def get_fazendas_by_radius(db: Session, latitude: float, longitude: float, raio_km: float) -> List[FazendaResponse]:
+        """
+        Busca fazendas dentro de um raio específico a partir de um ponto central
+        
+        Args:
+            db: Sessão do banco de dados
+            latitude: Latitude do ponto central
+            longitude: Longitude do ponto central
+            raio_km: Raio de busca em quilômetros
+            
+        Returns:
+            List[FazendaResponse]: Lista de fazendas dentro do raio especificado
+            
+        Raises:
+            HTTPException: 
+                - 500: Em caso de erro interno do servidor
+        """
+        try:
+            # Busca as fazendas no repositório
+            fazendas = FazendaRepository.get_by_radius(db, latitude, longitude, raio_km)
+            
+            # Converte os models para os schemas de resposta
+            return [FazendaResponse.model_validate(fazenda) for fazenda in fazendas]
+            
+        except Exception as e:
+            # Trata erros inesperados
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Erro ao buscar fazendas por raio: {str(e)}"
+            )
 

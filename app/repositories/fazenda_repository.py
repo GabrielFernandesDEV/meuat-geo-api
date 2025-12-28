@@ -51,4 +51,42 @@ class FazendaRepository:
         ).all()
         
         return fazendas
+    
+    @staticmethod
+    def get_by_radius(db: Session, latitude: float, longitude: float, raio_km: float) -> List[Fazenda]:
+        """
+        Busca fazendas dentro de um raio específico a partir de um ponto central
+        
+        Args:
+            db: Sessão do banco de dados
+            latitude: Latitude do ponto central
+            longitude: Longitude do ponto central
+            raio_km: Raio de busca em quilômetros
+            
+        Returns:
+            Lista de fazendas dentro do raio especificado
+        """
+        # Cria um ponto PostGIS a partir das coordenadas (SRID 4326 = WGS84)
+        ponto = func.ST_SetSRID(
+            func.ST_MakePoint(longitude, latitude),
+            4326
+        )
+        
+        # Converte o raio de quilômetros para metros
+        raio_metros = raio_km * 1000
+        
+        # Busca fazendas onde a distância entre a geometria da fazenda e o ponto
+        # é menor ou igual ao raio especificado
+        # ST_DWithin com use_spheroid=True calcula distância em metros usando esferoide
+        # (mais preciso para coordenadas geográficas SRID 4326)
+        fazendas = db.query(Fazenda).filter(
+            func.ST_DWithin(
+                Fazenda.geom,
+                ponto,
+                raio_metros,
+                True
+            )
+        ).all()
+        
+        return fazendas
 
