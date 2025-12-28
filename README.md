@@ -1,3 +1,5 @@
+@ -1,174 +0,0 @@
+
 # MeuAT Geo API
 
 API REST para busca de fazendas por localização geográfica no estado de São Paulo, desenvolvida como parte do desafio técnico para a vaga de Desenvolvedor Pleno na MeuAT.
@@ -49,16 +51,18 @@ A documentação automática da API (Swagger) estará disponível em:
 
 ## 📡 Endpoints da API
 
-### 1. GET /fazendas/{id}
+### 1. GET /fazendas/
 
 Retorna os dados de uma fazenda específica pelo ID (CAR).
 
 **Exemplo de requisição:**
+
 ```bash
 GET http://localhost:8000/fazendas/123456
 ```
 
 **Resposta:**
+
 ```json
 {
   "id": "123456",
@@ -73,6 +77,7 @@ GET http://localhost:8000/fazendas/123456
 Recebe coordenadas (latitude/longitude) e retorna a(s) fazenda(s) que contém aquele ponto.
 
 **Exemplo de requisição:**
+
 ```bash
 POST http://localhost:8000/fazendas/busca-ponto
 Content-Type: application/json
@@ -88,6 +93,7 @@ Content-Type: application/json
 Recebe coordenadas + raio em quilômetros e retorna todas as fazendas dentro desse raio.
 
 **Exemplo de requisição:**
+
 ```bash
 POST http://localhost:8000/fazendas/busca-raio
 Content-Type: application/json

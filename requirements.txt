@@ -1,0 +1,23 @@
+# Web Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# Database
+sqlalchemy==2.0.23
+psycopg2-binary==2.9.9
+geoalchemy2==0.14.2
+
+# Validation & Settings
+pydantic==2.5.0
+pydantic-settings==2.1.0
+python-dotenv==1.0.0
+
+# Geospatial
+geopandas==0.14.1
+pandas==2.1.4
+shapely==2.0.2
+fiona==1.9.5
+gdown==5.2.0
+
+# Progress bar
+tqdm-loggable==0.2
