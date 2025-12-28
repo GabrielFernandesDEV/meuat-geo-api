@@ -80,7 +80,7 @@ services:
     <<: *python-base
     container_name: meuat_carga
     volumes:
-      - ./scripts:/app/scripts
+      - ./scripts_carga:/app/scripts
       - ./data:/app/data
     working_dir: /app/scripts
     command: python -u main.py
