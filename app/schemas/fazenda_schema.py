@@ -1,6 +1,8 @@
 from pydantic import BaseModel, Field, field_validator
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List, Generic, TypeVar
 from datetime import date
+
+T = TypeVar('T')
 
 
 class FazendaResponse(BaseModel):
@@ -84,6 +86,29 @@ class FazendaFeatureResponse(BaseModel):
                     "dat_criaca": "2025-10-09",
                     "dat_atuali": "2025-10-09"
                 }
+            }
+        }
+    }
+
+
+class PaginatedResponse(BaseModel, Generic[T]):
+    """
+    Schema genérico de resposta paginada
+    """
+    items: List[T] = Field(..., description="Lista de itens da página atual")
+    total: int = Field(..., description="Total de itens encontrados")
+    page: int = Field(..., description="Página atual")
+    page_size: int = Field(..., description="Tamanho da página (quantidade de itens por página)")
+    total_pages: int = Field(..., description="Total de páginas")
+    
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "items": [],
+                "total": 100,
+                "page": 1,
+                "page_size": 10,
+                "total_pages": 10
             }
         }
     }

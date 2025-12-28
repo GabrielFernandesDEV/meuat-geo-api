@@ -74,12 +74,17 @@ GET http://localhost:8000/fazendas/123456
 
 ### 2. POST /fazendas/busca-ponto
 
-Recebe coordenadas (latitude/longitude) e retorna a(s) fazenda(s) que contém aquele ponto.
+Recebe coordenadas (latitude/longitude) no body e retorna a(s) fazenda(s) que contém aquele ponto. 
+Os parâmetros de paginação devem ser passados via query params.
+
+**Parâmetros de Query (opcionais):**
+- `page` (int, padrão: 1): Número da página
+- `page_size` (int, padrão: 10, máximo: 100): Quantidade de itens por página
 
 **Exemplo de requisição:**
 
 ```bash
-POST http://localhost:8000/fazendas/busca-ponto
+POST http://localhost:8000/fazendas/busca-ponto?page=1&page_size=10
 Content-Type: application/json
 
 {
@@ -88,20 +93,63 @@ Content-Type: application/json
 }
 ```
 
+**Exemplo de resposta:**
+
+```json
+{
+  "items": [
+    {
+      "id": 1,
+      "cod_tema": "AREA_IMOVEL",
+      "nom_tema": "Area do Imovel",
+      ...
+    }
+  ],
+  "total": 50,
+  "page": 1,
+  "page_size": 10,
+  "total_pages": 5
+}
+```
+
 ### 3. POST /fazendas/busca-raio
 
-Recebe coordenadas + raio em quilômetros e retorna todas as fazendas dentro desse raio.
+Recebe coordenadas + raio em quilômetros no body e retorna todas as fazendas dentro desse raio.
+Os parâmetros de paginação devem ser passados via query params.
+
+**Parâmetros de Query (opcionais):**
+- `page` (int, padrão: 1): Número da página
+- `page_size` (int, padrão: 10, máximo: 100): Quantidade de itens por página
 
 **Exemplo de requisição:**
 
 ```bash
-POST http://localhost:8000/fazendas/busca-raio
+POST http://localhost:8000/fazendas/busca-raio?page=1&page_size=10
 Content-Type: application/json
 
 {
   "latitude": -23.5505,
   "longitude": -46.6333,
   "raio_km": 50
+}
+```
+
+**Exemplo de resposta:**
+
+```json
+{
+  "items": [
+    {
+      "id": 1,
+      "cod_tema": "AREA_IMOVEL",
+      "nom_tema": "Area do Imovel",
+      ...
+    }
+  ],
+  "total": 150,
+  "page": 1,
+  "page_size": 10,
+  "total_pages": 15
 }
 ```
 
