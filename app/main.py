@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routes import health_router
+from app.routes import health_router, fazendas_router
 import uvicorn
 
 app = FastAPI(
@@ -10,6 +10,7 @@ app = FastAPI(
 
 # Registra as rotas
 app.include_router(health_router)
+app.include_router(fazendas_router)
 
 
 if __name__ == "__main__":
