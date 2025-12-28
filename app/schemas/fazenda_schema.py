@@ -88,3 +88,19 @@ class FazendaFeatureResponse(BaseModel):
         }
     }
 
+
+class PontoBuscaRequest(BaseModel):
+    """
+    Schema de request para busca de fazendas por ponto (coordenadas)
+    """
+    latitude: float = Field(..., ge=-90, le=90, description="Latitude do ponto (entre -90 e 90)")
+    longitude: float = Field(..., ge=-180, le=180, description="Longitude do ponto (entre -180 e 180)")
+    
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "latitude": -23.5505,
+                "longitude": -46.6333
+            }
+        }
+    }

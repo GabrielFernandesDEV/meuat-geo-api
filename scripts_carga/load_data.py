@@ -4,6 +4,13 @@ Script para carregar dados de Shapefile no banco PostGIS.
 Mantém Polygon e MultiPolygon conforme o tipo original.
 """
 
+# Proteção contra problemas de multiprocessing no Windows
+# Deve ser importado antes de outras bibliotecas que usam multiprocessing
+import multiprocessing
+if __name__ == "__main__":
+    # Configura o método de start para evitar problemas no Windows
+    multiprocessing.set_start_method('spawn', force=True)
+
 import logging
 import os
 import threading

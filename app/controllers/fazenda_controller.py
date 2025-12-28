@@ -1,5 +1,6 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
+from typing import List
 from app.repositories.fazenda_repository import FazendaRepository
 from app.schemas.fazenda_schema import FazendaResponse
 
@@ -60,5 +61,36 @@ class FazendaController:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Erro ao buscar fazenda: {str(e)}"
+            )
+    
+    @staticmethod
+    def get_fazendas_by_point(db: Session, latitude: float, longitude: float) -> List[FazendaResponse]:
+        """
+        Busca fazendas que contêm um ponto específico (latitude/longitude)
+        
+        Args:
+            db: Sessão do banco de dados
+            latitude: Latitude do ponto
+            longitude: Longitude do ponto
+            
+        Returns:
+            List[FazendaResponse]: Lista de fazendas que contêm o ponto
+            
+        Raises:
+            HTTPException: 
+                - 500: Em caso de erro interno do servidor
+        """
+        try:
+            # Busca as fazendas no repositório
+            fazendas = FazendaRepository.get_by_point(db, latitude, longitude)
+            
+            # Converte os models para os schemas de resposta
+            return [FazendaResponse.model_validate(fazenda) for fazenda in fazendas]
+            
+        except Exception as e:
+            # Trata erros inesperados
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Erro ao buscar fazendas por ponto: {str(e)}"
             )
 
