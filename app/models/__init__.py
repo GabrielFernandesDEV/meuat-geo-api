@@ -1,0 +1,1 @@
+# Models serão definidos aqui quando necessário

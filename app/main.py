@@ -1,24 +1,21 @@
 from fastapi import FastAPI
+from app.routes import health_router
+import uvicorn
 
 app = FastAPI(
     title="MeuAT Geo API",
-    description="API REST para busca de fazendas por localização geográfica",
+    description="API Geoespacial para MeuAT",
     version="1.0.0"
 )
 
-
-@app.get("/")
-async def root():
-    """Endpoint raiz da API"""
-    return {
-        "message": "Bem-vindo à MeuAT Geo API",
-        "docs": "/docs",
-        "redoc": "/redoc"
-    }
+# Registra as rotas
+app.include_router(health_router)
 
 
-@app.get("/health")
-async def health_check():
-    """Endpoint de verificação de saúde da API"""
-    return {"status": "ok"}
-
+if __name__ == "__main__":
+    uvicorn.run(
+        "app.main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True
+    )
