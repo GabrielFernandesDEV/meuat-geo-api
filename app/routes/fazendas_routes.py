@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Path
 from sqlalchemy.orm import Session
 from app.controllers.fazenda_controller import FazendaController, NOT_FOUND_RESPONSE
 from app.schemas.fazenda_schema import FazendaResponse
@@ -20,7 +20,7 @@ router = APIRouter(
     responses=NOT_FOUND_RESPONSE
 )
 async def get_fazenda_by_id(
-    id: int,
+    id: int = Path(..., gt=0, description="ID da fazenda (deve ser um número inteiro positivo)"),
     db: Session = Depends(get_db)
 ) -> FazendaResponse:
     """
