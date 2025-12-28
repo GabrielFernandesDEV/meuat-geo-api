@@ -1,19 +1,36 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 from typing import Optional, List, Tuple
-from geoalchemy2 import functions as geo_func
 from app.models.fazenda_model import Fazenda
+from app.repositories.base_repository import BaseRepository
+from app.repositories.geo_repository_mixin import GeoRepositoryMixin
 
 
-class FazendaRepository:
+class FazendaRepository(BaseRepository[Fazenda], GeoRepositoryMixin[Fazenda]):
     """
-    Repository responsável pelas operações de banco de dados relacionadas a Fazendas
+    Repository responsável pelas operações de banco de dados relacionadas a Fazendas.
+    
+    Herda funcionalidades de:
+    - BaseRepository: métodos genéricos (get_by_id, get_all, create)
+    - GeoRepositoryMixin: métodos geoespaciais com paginação (get_by_point, get_by_radius)
     """
     
+    def __init__(self):
+        """
+        Inicializa o repository com o modelo Fazenda
+        """
+        BaseRepository.__init__(self, Fazenda)
+    
+    # Métodos disponíveis através das classes base:
+    # - get_by_id(db, fazenda_id) -> Optional[Fazenda] (de BaseRepository)
+    # - get_by_point(db, latitude, longitude, page=1, page_size=10) -> Tuple[List[Fazenda], int] (de GeoRepositoryMixin)
+    # - get_by_radius(db, latitude, longitude, raio_km, page=1, page_size=10) -> Tuple[List[Fazenda], int] (de GeoRepositoryMixin)
+    # - get_all(db, skip=0, limit=100) -> List[Fazenda] (de BaseRepository)
+    
+    # Métodos estáticos mantidos para compatibilidade com código existente
     @staticmethod
     def get_by_id(db: Session, fazenda_id: int) -> Optional[Fazenda]:
         """
-        Busca uma fazenda pelo ID
+        Busca uma fazenda pelo ID (método estático para compatibilidade)
         
         Args:
             db: Sessão do banco de dados
@@ -22,13 +39,15 @@ class FazendaRepository:
         Returns:
             Fazenda se encontrada, None caso contrário
         """
-        fazenda = db.query(Fazenda).filter(Fazenda.id == fazenda_id).first()
-        return fazenda
+        repository = FazendaRepository()
+        # Chama diretamente o método da classe base para evitar recursão
+        return BaseRepository.get_by_id(repository, db, fazenda_id)
     
     @staticmethod
     def get_by_point(db: Session, latitude: float, longitude: float, page: int = 1, page_size: int = 10) -> Tuple[List[Fazenda], int]:
         """
         Busca fazendas que contêm um ponto específico (latitude/longitude) com paginação
+        (método estático para compatibilidade)
         
         Args:
             db: Sessão do banco de dados
@@ -40,30 +59,15 @@ class FazendaRepository:
         Returns:
             Tupla contendo (lista de fazendas paginadas, total de fazendas encontradas)
         """
-        # Cria um ponto PostGIS a partir das coordenadas (SRID 4326 = WGS84)
-        ponto = func.ST_SetSRID(
-            func.ST_MakePoint(longitude, latitude),
-            4326
-        )
-        
-        # Query base para buscar fazendas onde a geometria contém o ponto
-        query = db.query(Fazenda).filter(
-            geo_func.ST_Contains(Fazenda.geom, ponto)
-        )
-        
-        # Conta o total de resultados
-        total = query.count()
-        
-        # Aplica paginação
-        offset = (page - 1) * page_size
-        fazendas = query.offset(offset).limit(page_size).all()
-        
-        return fazendas, total
+        repository = FazendaRepository()
+        # Chama diretamente o método do mixin para evitar recursão
+        return GeoRepositoryMixin.get_by_point(repository, db, latitude, longitude, page, page_size)
     
     @staticmethod
     def get_by_radius(db: Session, latitude: float, longitude: float, raio_km: float, page: int = 1, page_size: int = 10) -> Tuple[List[Fazenda], int]:
         """
         Busca fazendas dentro de um raio específico a partir de um ponto central com paginação
+        (método estático para compatibilidade)
         
         Args:
             db: Sessão do banco de dados
@@ -76,34 +80,7 @@ class FazendaRepository:
         Returns:
             Tupla contendo (lista de fazendas paginadas, total de fazendas encontradas)
         """
-        # Cria um ponto PostGIS a partir das coordenadas (SRID 4326 = WGS84)
-        ponto = func.ST_SetSRID(
-            func.ST_MakePoint(longitude, latitude),
-            4326
-        )
-        
-        # Converte o raio de quilômetros para metros
-        raio_metros = raio_km * 1000
-        
-        # Query base para buscar fazendas onde a distância entre a geometria da fazenda e o ponto
-        # é menor ou igual ao raio especificado
-        # ST_DWithin com use_spheroid=True calcula distância em metros usando esferoide
-        # (mais preciso para coordenadas geográficas SRID 4326)
-        query = db.query(Fazenda).filter(
-            func.ST_DWithin(
-                Fazenda.geom,
-                ponto,
-                raio_metros,
-                True
-            )
-        )
-        
-        # Conta o total de resultados
-        total = query.count()
-        
-        # Aplica paginação
-        offset = (page - 1) * page_size
-        fazendas = query.offset(offset).limit(page_size).all()
-        
-        return fazendas, total
+        repository = FazendaRepository()
+        # Chama diretamente o método do mixin para evitar recursão
+        return GeoRepositoryMixin.get_by_radius(repository, db, latitude, longitude, raio_km, page, page_size)
 
