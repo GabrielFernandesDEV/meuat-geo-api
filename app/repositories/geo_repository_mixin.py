@@ -24,6 +24,28 @@ class GeoRepositoryMixin(Generic[ModelType]):
         if radius_km > 20000:  # Aproximadamente metade da circunferência da Terra
             raise ValueError("Raio muito grande (máximo: 20000 km)")
     
+    def _get_paginated_total(self, query, page: int, page_size: int, entities: List[ModelType]) -> int:
+        """
+        Calcula o total de resultados de forma otimizada.
+        
+        Otimização: se primeira página e menos resultados que page_size, 
+        usa len(entities) como total, evitando uma query count() adicional.
+        Caso contrário, faz count() para obter o total real.
+        
+        Args:
+            query: Query SQLAlchemy
+            page: Número da página
+            page_size: Tamanho da página
+            entities: Lista de entidades já paginadas
+            
+        Returns:
+            Total de entidades encontradas
+        """
+        if page == 1 and len(entities) < page_size:
+            return len(entities)
+        else:
+            return query.count()
+    
     def get_by_point(
         self, 
         db: Session, 
@@ -61,12 +83,12 @@ class GeoRepositoryMixin(Generic[ModelType]):
             func.ST_Contains(geom_field, ponto)
         )
         
-        # Conta o total de resultados
-        total = query.count()
-        
         # Aplica paginação
         offset = (page - 1) * page_size
         entities = query.offset(offset).limit(page_size).all()
+        
+        # Calcula o total de forma otimizada
+        total = self._get_paginated_total(query, page, page_size, entities)
         
         return entities, total
     
@@ -137,11 +159,11 @@ class GeoRepositoryMixin(Generic[ModelType]):
             )
         )
         
-        # Conta o total de resultados
-        total = query.count()
-        
         # Aplica paginação
         offset = (page - 1) * page_size
         entities = query.offset(offset).limit(page_size).all()
+        
+        # Calcula o total de forma otimizada
+        total = self._get_paginated_total(query, page, page_size, entities)
         
         return entities, total
