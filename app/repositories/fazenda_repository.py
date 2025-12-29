@@ -10,7 +10,7 @@ class FazendaRepository(BaseRepository[Fazenda], GeoRepositoryMixin[Fazenda]):
     Repository responsável pelas operações de banco de dados relacionadas a Fazendas.
     
     Herda funcionalidades de:
-    - BaseRepository: métodos genéricos (get_by_id, get_all, create)
+    - BaseRepository: métodos genéricos (get_by_id)
     - GeoRepositoryMixin: métodos geoespaciais com paginação (get_by_point, get_by_radius)
     """
     
@@ -24,7 +24,6 @@ class FazendaRepository(BaseRepository[Fazenda], GeoRepositoryMixin[Fazenda]):
     # - get_by_id(db, fazenda_id) -> Optional[Fazenda] (de BaseRepository)
     # - get_by_point(db, latitude, longitude, page=1, page_size=10) -> Tuple[List[Fazenda], int] (de GeoRepositoryMixin)
     # - get_by_radius(db, latitude, longitude, raio_km, page=1, page_size=10) -> Tuple[List[Fazenda], int] (de GeoRepositoryMixin)
-    # - get_all(db, skip=0, limit=100) -> List[Fazenda] (de BaseRepository)
     
     # Métodos estáticos mantidos para compatibilidade com código existente
     @staticmethod
@@ -39,9 +38,7 @@ class FazendaRepository(BaseRepository[Fazenda], GeoRepositoryMixin[Fazenda]):
         Returns:
             Fazenda se encontrada, None caso contrário
         """
-        repository = FazendaRepository()
-        # Chama diretamente o método da classe base para evitar recursão
-        return BaseRepository.get_by_id(repository, db, fazenda_id)
+        return db.query(Fazenda).filter(Fazenda.id == fazenda_id).first()
     
     @staticmethod
     def get_by_point(db: Session, latitude: float, longitude: float, page: int = 1, page_size: int = 10) -> Tuple[List[Fazenda], int]:
