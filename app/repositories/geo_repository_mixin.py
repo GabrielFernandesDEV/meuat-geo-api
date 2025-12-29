@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from typing import List, TypeVar, Generic, Tuple, Type
+from sqlalchemy.sql import and_
+from typing import List, TypeVar, Generic, Tuple
 from geoalchemy2 import functions as geo_func
 
 # Tipo genérico para os modelos
@@ -99,17 +100,27 @@ class GeoRepositoryMixin(Generic[ModelType]):
         
         # Obtém o campo de geometria do modelo
         geom_field = getattr(self.model, geom_field_name)
+        buffer_radius = func.buffer(func.ST_Geography(ponto), radius_meters)
         
         # Query base para buscar entidades onde a distância entre a geometria e o ponto
         # é menor ou igual ao raio especificado
-        # ST_DWithin com use_spheroid=True calcula distância em metros usando esferoide
-        # (mais preciso para coordenadas geográficas SRID 4326)
+        # 
+        # Explicação das condições:
+        # 1. ST_DWithin: Verifica se a geometria está dentro do raio especificado (filtro preciso)
+        #    - use_spheroid=True: Usa cálculo esferoidal para maior precisão em coordenadas geográficas
+        # 2. Operador &&: Verifica sobreposição de bounding boxes (filtro rápido para otimização)
+        #    - ST_Geography converte para geography type para trabalhar com distâncias em metros
+        #    - O operador && é mais rápido que ST_DWithin, então usamos como pré-filtro
+        #    - buffer_radius é o buffer criado ao redor do ponto central
         query = db.query(self.model).filter(
-            func.ST_DWithin(
-                geom_field,
-                ponto,
-                radius_meters,
-                True  # use_spheroid=True
+            and_(
+                func.ST_DWithin(
+                    geom_field,
+                    ponto,
+                    radius_meters,
+                    True  # use_spheroid=True
+                ),
+                func.ST_Geography(geom_field).op('&&')(buffer_radius)
             )
         )
         
@@ -121,4 +132,3 @@ class GeoRepositoryMixin(Generic[ModelType]):
         entities = query.offset(offset).limit(page_size).all()
         
         return entities, total
-
