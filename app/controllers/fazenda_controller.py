@@ -10,7 +10,7 @@ NOT_FOUND_RESPONSE = {
         "description": "Fazenda não encontrada",
         "content": {
             "application/json": {
-                "example": {"detail": "Fazenda com ID 0 não encontrada"}
+                "example": {"detail": "Fazenda com código SP-3500105-279714F410E746B0B440EFAD4B0933D4 não encontrada"}
             }
         }
     }
@@ -23,9 +23,51 @@ class FazendaController:
     """
     
     @staticmethod
+    def get_fazenda_by_cod_imovel(db: Session, cod_imovel: str) -> FazendaResponse:
+        """
+        Busca uma fazenda pelo cod_imovel
+        
+        Args:
+            db: Sessão do banco de dados
+            cod_imovel: Código do imóvel da fazenda a ser buscada
+            
+        Returns:
+            FazendaResponse: Dados da fazenda encontrada
+            
+        Raises:
+            HTTPException: 
+                - 404: Se a fazenda não for encontrada
+                - 500: Em caso de erro interno do servidor
+        """
+        try:
+            # Busca a fazenda no repositório
+            fazenda = FazendaRepository.get_by_cod_imovel(db, cod_imovel)
+            
+            # Verifica se a fazenda foi encontrada
+            if not fazenda:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Fazenda com código {cod_imovel} não encontrada"
+                )
+            
+            # Converte o model para o schema de resposta usando from_attributes
+            return FazendaResponse.model_validate(fazenda)
+            
+        except HTTPException:
+            # Re-lança HTTPException (404, etc) para que o FastAPI trate corretamente
+            raise
+        except Exception as e:
+            # Trata erros inesperados
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Erro ao buscar fazenda: {str(e)}"
+            )
+    
+    @staticmethod
     def get_fazenda_by_id(db: Session, fazenda_id: int) -> FazendaResponse:
         """
         Busca uma fazenda pelo ID
+        DEPRECATED: Use get_fazenda_by_cod_imovel() em vez disso.
         
         Args:
             db: Sessão do banco de dados

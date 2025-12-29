@@ -368,9 +368,19 @@ def load_data(path: str, name_file: str):
             # Fecha a barra de progresso (o timer thread vai parar automaticamente)
             pbar.close()
 
-        # Índice espacial
-        print("📊 Criando índices espaciais...")
+        # Índices
+        print("📊 Criando índices...")
         with engine.begin() as conn:
+            # Índice em cod_imovel (para buscas por código do imóvel)
+            conn.execute(
+                text(
+                    "CREATE INDEX IF NOT EXISTS "
+                    "idx_fazendas_cod_imovel "
+                    "ON fazendas (cod_imovel)"
+                )
+            )
+            print("   ✅ Índice idx_fazendas_cod_imovel criado (cod_imovel)")
+            
             # Índice em geometry (para consultas espaciais gerais)
             conn.execute(
                 text(

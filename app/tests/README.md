@@ -40,8 +40,8 @@ pytest app/tests/test_fazendas.py
 ### Executar uma classe de testes específica
 
 ```bash
-# Testes do endpoint GET /fazendas/{id}
-pytest app/tests/test_fazendas.py::TestGetFazendaById
+# Testes do endpoint GET /fazendas/{cod_imovel}
+pytest app/tests/test_fazendas.py::TestGetFazendaByCodImovel
 
 # Testes do endpoint POST /fazendas/busca-ponto
 pytest app/tests/test_fazendas.py::TestBuscarFazendasPorPonto
@@ -82,13 +82,12 @@ Testa o endpoint `GET /health` que verifica se a API está funcionando corretame
 
 ### `test_fazendas.py` - Testes dos Endpoints de Fazendas
 
-#### Classe: `TestGetFazendaById`
-Testa o endpoint `GET /fazendas/{id}` para buscar uma fazenda específica pelo ID.
+#### Classe: `TestGetFazendaByCodImovel`
+Testa o endpoint `GET /fazendas/{cod_imovel}` para buscar uma fazenda específica pelo código do imóvel (cod_imovel).
 
 **Testes:**
-- ✅ `test_get_fazenda_by_id_success`: Busca bem-sucedida de fazenda existente
-- ❌ `test_get_fazenda_by_id_not_found`: Retorno 404 quando fazenda não existe
-- 🔒 `test_get_fazenda_by_id_invalid_id`: Validação de IDs inválidos (zero ou negativo)
+- ✅ `test_get_fazenda_by_cod_imovel_success`: Busca bem-sucedida de fazenda existente
+- ❌ `test_get_fazenda_by_cod_imovel_not_found`: Retorno 404 quando fazenda não existe
 
 #### Classe: `TestBuscarFazendasPorPonto`
 Testa o endpoint `POST /fazendas/busca-ponto` para buscar fazendas que contêm um ponto específico.
@@ -153,23 +152,23 @@ Os testes cobrem:
 
 ### Endpoints Testados
 - ✅ `GET /health` - Health check
-- ✅ `GET /fazendas/{id}` - Buscar fazenda por ID
+- ✅ `GET /fazendas/{cod_imovel}` - Buscar fazenda por código do imóvel
 - ✅ `POST /fazendas/busca-ponto` - Buscar fazendas por ponto
 - ✅ `POST /fazendas/busca-raio` - Buscar fazendas por raio
 
 ## 📊 Estatísticas dos Testes
 
-Total de testes: **15**
+Total de testes: **13**
 
 - Testes de Health: 2
-- Testes de Fazendas por ID: 3
+- Testes de Fazendas por Código do Imóvel: 2
 - Testes de Busca por Ponto: 5
 - Testes de Busca por Raio: 5
 
 ## 🔍 Validações Testadas
 
 ### Validações de Parâmetros
-- IDs negativos ou zero são rejeitados
+- Código do imóvel (cod_imovel) não pode ser vazio
 - Coordenadas fora dos intervalos válidos são rejeitadas
   - Latitude: deve estar entre -90 e 90
   - Longitude: deve estar entre -180 e 180

@@ -12,22 +12,22 @@ router = APIRouter(
 
 
 @router.get(
-    "/{id}",
+    "/{cod_imovel}",
     response_model=FazendaResponse,
     status_code=status.HTTP_200_OK,
-    summary="Buscar Fazenda por ID",
-    description="Retorna os dados de uma fazenda específica pelo ID",
+    summary="Buscar Fazenda por Código do Imóvel",
+    description="Retorna os dados de uma fazenda específica pelo código do imóvel (cod_imovel)",
     responses=NOT_FOUND_RESPONSE
 )
-async def get_fazenda_by_id(
-    id: int = Path(..., gt=0, description="ID da fazenda (deve ser um número inteiro positivo)"),
+async def get_fazenda_by_cod_imovel(
+    cod_imovel: str = Path(..., min_length=1, description="Código do imóvel da fazenda (cod_imovel)"),
     db: Session = Depends(get_db)
 ) -> FazendaResponse:
     """
-    Endpoint para buscar uma fazenda pelo ID
+    Endpoint para buscar uma fazenda pelo código do imóvel (cod_imovel)
     
     Args:
-        id: ID da fazenda a ser buscada
+        cod_imovel: Código do imóvel da fazenda a ser buscada
         db: Sessão do banco de dados (injetada automaticamente)
         
     Returns:
@@ -36,7 +36,7 @@ async def get_fazenda_by_id(
     Raises:
         HTTPException: 404 se a fazenda não for encontrada
     """
-    return FazendaController.get_fazenda_by_id(db, id)
+    return FazendaController.get_fazenda_by_cod_imovel(db, cod_imovel)
 
 
 @router.post(

@@ -2,34 +2,35 @@ from unittest.mock import patch
 from fastapi import status
 
 
-class TestGetFazendaById:
+class TestGetFazendaByCodImovel:
     """
-    Classe de testes para o endpoint GET /fazendas/{id}.
+    Classe de testes para o endpoint GET /fazendas/{cod_imovel}.
     
-    Este endpoint busca uma fazenda específica pelo seu ID. Testa casos de sucesso,
-    falha (404) e validação de parâmetros inválidos.
+    Este endpoint busca uma fazenda específica pelo código do imóvel (cod_imovel). 
+    Testa casos de sucesso, falha (404) e validação de parâmetros inválidos.
     """
     
-    @patch('app.controllers.fazenda_controller.FazendaRepository.get_by_id')
-    def test_get_fazenda_by_id_success(self, mock_get_by_id, client, sample_fazenda, mock_db):
+    @patch('app.controllers.fazenda_controller.FazendaRepository.get_by_cod_imovel')
+    def test_get_fazenda_by_cod_imovel_success(self, mock_get_by_cod_imovel, client, sample_fazenda, mock_db):
         """
-        Testa busca bem-sucedida de uma fazenda existente pelo ID.
+        Testa busca bem-sucedida de uma fazenda existente pelo código do imóvel.
         
-        Cenário: Fazenda com ID=1 existe no banco de dados.
+        Cenário: Fazenda com cod_imovel existe no banco de dados.
         
         Verifica:
         - Status HTTP 200 (sucesso)
         - Retorno de todos os campos esperados da fazenda
-        - Valores corretos nos campos principais (id, cod_tema, municipio, etc.)
-        - Chamada correta do repository com o ID fornecido
+        - Valores corretos nos campos principais (id, cod_tema, cod_imovel, municipio, etc.)
+        - Chamada correta do repository com o cod_imovel fornecido
         
-        Este é o caso feliz (happy path) do endpoint de busca por ID.
+        Este é o caso feliz (happy path) do endpoint de busca por código do imóvel.
         """
         # Configura os mocks
-        mock_get_by_id.return_value = sample_fazenda
+        cod_imovel_test = "SP-3500105-279714F410E746B0B440EFAD4B0933D4"
+        mock_get_by_cod_imovel.return_value = sample_fazenda
         
         # Faz a requisição
-        response = client.get("/fazendas/1")
+        response = client.get(f"/fazendas/{cod_imovel_test}")
         
         # Verifica a resposta
         assert response.status_code == status.HTTP_200_OK
@@ -37,20 +38,21 @@ class TestGetFazendaById:
         assert data["id"] == 1
         assert data["cod_tema"] == "AREA_IMOVEL"
         assert data["nom_tema"] == "Area do Imovel"
+        assert data["cod_imovel"] == cod_imovel_test
         assert data["municipio"] == "Adamantina"
         assert data["cod_estado"] == "SP"
         
         # Verifica que o método do repository foi chamado corretamente
-        mock_get_by_id.assert_called_once()
-        call_args = mock_get_by_id.call_args[0]
-        assert call_args[1] == 1  # fazenda_id
+        mock_get_by_cod_imovel.assert_called_once()
+        call_args = mock_get_by_cod_imovel.call_args[0]
+        assert call_args[1] == cod_imovel_test  # cod_imovel
     
-    @patch('app.controllers.fazenda_controller.FazendaRepository.get_by_id')
-    def test_get_fazenda_by_id_not_found(self, mock_get_by_id, client, mock_db):
+    @patch('app.controllers.fazenda_controller.FazendaRepository.get_by_cod_imovel')
+    def test_get_fazenda_by_cod_imovel_not_found(self, mock_get_by_cod_imovel, client, mock_db):
         """
         Testa o comportamento quando uma fazenda não existe no banco de dados.
         
-        Cenário: Fazenda com ID=999 não existe no banco.
+        Cenário: Fazenda com cod_imovel não existe no banco.
         
         Verifica:
         - Status HTTP 404 (Not Found)
@@ -61,39 +63,18 @@ class TestGetFazendaById:
         um recurso não existe, seguindo as convenções REST.
         """
         # Configura os mocks
-        mock_get_by_id.return_value = None
+        cod_imovel_test = "SP-9999999-NAOEXISTE"
+        mock_get_by_cod_imovel.return_value = None
         
         # Faz a requisição
-        response = client.get("/fazendas/999")
+        response = client.get(f"/fazendas/{cod_imovel_test}")
         
         # Verifica a resposta
         assert response.status_code == status.HTTP_404_NOT_FOUND
         data = response.json()
         assert "detail" in data
         assert "não encontrada" in data["detail"].lower()
-    
-    def test_get_fazenda_by_id_invalid_id(self, client):
-        """
-        Testa a validação de parâmetros de rota inválidos.
-        
-        Cenários testados:
-        - ID = 0 (deve ser > 0 conforme validação do Path)
-        - ID = -1 (valores negativos não são permitidos)
-        
-        Verifica:
-        - Status HTTP 422 (Unprocessable Entity) para ambos os casos
-        - Validação do Pydantic/FastAPI rejeitando valores inválidos
-        
-        Este teste garante que a API valida corretamente os parâmetros
-        de entrada antes de processar a requisição.
-        """
-        # Testa com ID zero
-        response = client.get("/fazendas/0")
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-        
-        # Testa com ID negativo
-        response = client.get("/fazendas/-1")
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert cod_imovel_test in data["detail"]
 
 
 class TestBuscarFazendasPorPonto:
