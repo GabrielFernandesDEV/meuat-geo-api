@@ -1,5 +1,7 @@
 from fastapi import FastAPI
-from app.routes import health_router
+from fastapi.exceptions import RequestValidationError
+from app.routes import health_router, fazendas_router
+from app.core.exception_handlers import validation_exception_handler
 import uvicorn
 
 app = FastAPI(
@@ -8,8 +10,12 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Registra exception handlers customizados
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+
 # Registra as rotas
 app.include_router(health_router)
+app.include_router(fazendas_router)
 
 
 if __name__ == "__main__":

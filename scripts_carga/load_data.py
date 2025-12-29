@@ -4,6 +4,13 @@ Script para carregar dados de Shapefile no banco PostGIS.
 Mantém Polygon e MultiPolygon conforme o tipo original.
 """
 
+# Proteção contra problemas de multiprocessing no Windows
+# Deve ser importado antes de outras bibliotecas que usam multiprocessing
+import multiprocessing
+if __name__ == "__main__":
+    # Configura o método de start para evitar problemas no Windows
+    multiprocessing.set_start_method('spawn', force=True)
+
 import logging
 import os
 import threading
@@ -362,8 +369,9 @@ def load_data(path: str, name_file: str):
             pbar.close()
 
         # Índice espacial
-        print("📊 Criando índice espacial...")
+        print("📊 Criando índices espaciais...")
         with engine.begin() as conn:
+            # Índice em geometry (para consultas espaciais gerais)
             conn.execute(
                 text(
                     "CREATE INDEX IF NOT EXISTS "
@@ -371,6 +379,17 @@ def load_data(path: str, name_file: str):
                     "ON fazendas USING GIST (geom)"
                 )
             )
+            print("   ✅ Índice idx_fazendas_geom criado (geometry)")
+            
+            # Índice em geography (otimizado para ST_DWithin e consultas por distância)
+            conn.execute(
+                text(
+                    "CREATE INDEX IF NOT EXISTS "
+                    "idx_fazendas_geom_geog "
+                    "ON fazendas USING GIST ((geom::geography))"
+                )
+            )
+            print("   ✅ Índice idx_fazendas_geom_geog criado (geography)")
 
         elapsed = time.time() - start_time
 

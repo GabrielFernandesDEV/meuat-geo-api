@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3.9'
 
 x-python-base: &python-base
   build:
@@ -12,7 +12,7 @@ x-python-base: &python-base
     POSTGRES_DB: ${POSTGRES_DB}
     POSTGRES_HOST: db
     POSTGRES_PORT: 5432
-
+    
 services:
   db:
     image: postgis/postgis:15-3.3
@@ -88,6 +88,22 @@ services:
       db:
         condition: service_healthy
     restart: "no"
+
+  api:
+    <<: *python-base
+    container_name: meuat_geo_api
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      - ./app:/app/app
+    working_dir: /app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      db:
+        condition: service_healthy
+      carga:
+        condition: service_completed_successfully
+    restart: unless-stopped
 
 volumes:
   postgres_data:

@@ -1,1 +1,3 @@
-# Models serão definidos aqui quando necessário
+from app.models.fazenda_model import Fazenda
+
+__all__ = ["Fazenda"]
