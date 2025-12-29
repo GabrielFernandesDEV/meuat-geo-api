@@ -5,11 +5,12 @@ Este diretório contém os testes automatizados para a API Geoespacial MeuAT, ut
 ## 📁 Estrutura de Arquivos
 
 ```
-tests/
+app/tests/
 ├── __init__.py          # Arquivo de inicialização do pacote de testes
 ├── conftest.py          # Fixtures compartilhadas e configurações do pytest
 ├── test_health.py       # Testes do endpoint GET /health
-└── test_fazendas.py     # Testes dos endpoints de fazendas
+├── test_fazendas.py     # Testes dos endpoints de fazendas
+└── README.md            # Este arquivo
 ```
 
 ## 🚀 Como Executar os Testes
@@ -30,29 +31,29 @@ pytest -v
 
 ```bash
 # Testes de health check
-pytest tests/test_health.py
+pytest app/tests/test_health.py
 
 # Testes de fazendas
-pytest tests/test_fazendas.py
+pytest app/tests/test_fazendas.py
 ```
 
 ### Executar uma classe de testes específica
 
 ```bash
 # Testes do endpoint GET /fazendas/{id}
-pytest tests/test_fazendas.py::TestGetFazendaById
+pytest app/tests/test_fazendas.py::TestGetFazendaById
 
 # Testes do endpoint POST /fazendas/busca-ponto
-pytest tests/test_fazendas.py::TestBuscarFazendasPorPonto
+pytest app/tests/test_fazendas.py::TestBuscarFazendasPorPonto
 
 # Testes do endpoint POST /fazendas/busca-raio
-pytest tests/test_fazendas.py::TestBuscarFazendasPorRaio
+pytest app/tests/test_fazendas.py::TestBuscarFazendasPorRaio
 ```
 
 ### Executar um teste específico
 
 ```bash
-pytest tests/test_health.py::TestHealthEndpoint::test_health_check_success
+pytest app/tests/test_health.py::TestHealthEndpoint::test_health_check_success
 ```
 
 ### Executar com cobertura de código (se tiver pytest-cov instalado)
