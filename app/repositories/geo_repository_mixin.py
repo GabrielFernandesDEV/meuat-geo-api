@@ -17,6 +17,13 @@ class GeoRepositoryMixin(Generic[ModelType]):
         - O banco de dados deve ter suporte PostGIS
     """
     
+    def _validate_radius(self, radius_km: float):
+        """Valida se o raio é positivo"""
+        if radius_km <= 0:
+            raise ValueError("Raio deve ser maior que zero")
+        if radius_km > 20000:  # Aproximadamente metade da circunferência da Terra
+            raise ValueError("Raio muito grande (máximo: 20000 km)")
+    
     def get_by_point(
         self, 
         db: Session, 
@@ -88,6 +95,9 @@ class GeoRepositoryMixin(Generic[ModelType]):
         Returns:
             Tupla contendo (lista de entidades paginadas, total de entidades encontradas)
         """
+        # Valida o raio antes de processar
+        self._validate_radius(radius_km)
+        
         # Converte o raio de quilômetros para metros (PostGIS usa metros)
         radius_meters = radius_km * 1000
         
