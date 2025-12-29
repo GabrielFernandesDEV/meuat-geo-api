@@ -1,8 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from sqlalchemy.sql import and_
+from sqlalchemy.sql import and_, text
 from typing import List, TypeVar, Generic, Tuple
-from geoalchemy2 import functions as geo_func
 
 # Tipo genérico para os modelos
 ModelType = TypeVar("ModelType")
@@ -52,7 +51,7 @@ class GeoRepositoryMixin(Generic[ModelType]):
         
         # Query base para buscar entidades onde a geometria contém o ponto
         query = db.query(self.model).filter(
-            geo_func.ST_Contains(geom_field, ponto)
+            func.ST_Contains(geom_field, ponto)
         )
         
         # Conta o total de resultados
@@ -89,38 +88,42 @@ class GeoRepositoryMixin(Generic[ModelType]):
         Returns:
             Tupla contendo (lista de entidades paginadas, total de entidades encontradas)
         """
+        # Converte o raio de quilômetros para metros (PostGIS usa metros)
+        radius_meters = radius_km * 1000
+        
         # Cria um ponto PostGIS a partir das coordenadas (SRID 4326 = WGS84)
         ponto = func.ST_SetSRID(
             func.ST_MakePoint(longitude, latitude),
             4326
         )
         
-        # Converte o raio de quilômetros para metros (PostGIS usa metros)
-        radius_meters = radius_km * 1000
-        
         # Obtém o campo de geometria do modelo
         geom_field = getattr(self.model, geom_field_name)
-        buffer_radius = func.buffer(func.ST_Geography(ponto), radius_meters)
         
-        # Query base para buscar entidades onde a distância entre a geometria e o ponto
-        # é menor ou igual ao raio especificado
-        # 
-        # Explicação das condições:
-        # 1. ST_DWithin: Verifica se a geometria está dentro do raio especificado (filtro preciso)
-        #    - use_spheroid=True: Usa cálculo esferoidal para maior precisão em coordenadas geográficas
-        # 2. Operador &&: Verifica sobreposição de bounding boxes (filtro rápido para otimização)
-        #    - ST_Geography converte para geography type para trabalhar com distâncias em metros
-        #    - O operador && é mais rápido que ST_DWithin, então usamos como pré-filtro
-        #    - buffer_radius é o buffer criado ao redor do ponto central
+        # Obtém o nome da tabela para referenciar a coluna corretamente
+        table_name = self.model.__table__.name
+        
+        # Cria expressão SQL para o bounding box usando operador && (otimização rápida)
+        # Cria um buffer em geography e converte para geometry para usar com &&
+        bbox_sql = text(
+            f"{table_name}.{geom_field_name} && "
+            f"ST_Envelope(ST_Buffer(ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography, :radius)::geometry)"
+        )
+        
+        # Query otimizada com dois filtros:
+        # 1. Operador && (bounding box) - filtro rápido que usa índices espaciais
+        #    Performance: cost=24285.38..24285.39 rows=1 width=8 (COM &&)
+        # 2. ST_DWithin - filtro preciso com cálculo esferoidal usando geography
+        #    Performance: cost=315962.09..315962.10 rows=1 width=8 (SEM &&)
         query = db.query(self.model).filter(
             and_(
+                bbox_sql.bindparams(lon=longitude, lat=latitude, radius=radius_meters),
                 func.ST_DWithin(
                     geom_field,
                     ponto,
                     radius_meters,
                     True  # use_spheroid=True
-                ),
-                func.ST_Geography(geom_field).op('&&')(buffer_radius)
+                )
             )
         )
         
