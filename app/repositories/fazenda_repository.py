@@ -22,24 +22,35 @@ class FazendaRepository(BaseRepository[Fazenda], GeoRepositoryMixin[Fazenda]):
     
     # Métodos disponíveis através das classes base:
     # - get_by_id(db, fazenda_id) -> Optional[Fazenda] (de BaseRepository)
-    # - get_by_cod_imovel(db, cod_imovel) -> List[Fazenda] (busca por cod_imovel, pode retornar múltiplos)
+    # - get_by_cod_imovel(db, cod_imovel, page=1, page_size=10) -> Tuple[List[Fazenda], int] (busca por cod_imovel com paginação, pode retornar múltiplos)
     # - get_by_point(db, latitude, longitude, page=1, page_size=10) -> Tuple[List[Fazenda], int] (de GeoRepositoryMixin)
     # - get_by_radius(db, latitude, longitude, raio_km, page=1, page_size=10) -> Tuple[List[Fazenda], int] (de GeoRepositoryMixin)
     
     # Métodos estáticos mantidos para compatibilidade com código existente
     @staticmethod
-    def get_by_cod_imovel(db: Session, cod_imovel: str) -> List[Fazenda]:
+    def get_by_cod_imovel(db: Session, cod_imovel: str, page: int = 1, page_size: int = 10) -> Tuple[List[Fazenda], int]:
         """
-        Busca todas as fazendas pelo cod_imovel (pode retornar múltiplos resultados)
+        Busca todas as fazendas pelo cod_imovel (pode retornar múltiplos resultados) com paginação
         
         Args:
             db: Sessão do banco de dados
             cod_imovel: Código do imóvel da fazenda a ser buscada
+            page: Número da página (padrão: 1)
+            page_size: Tamanho da página (padrão: 10)
             
         Returns:
-            Lista de fazendas encontradas (pode estar vazia ou conter múltiplos itens)
+            Tupla contendo (lista de fazendas paginadas, total de fazendas encontradas)
         """
-        return db.query(Fazenda).filter(Fazenda.cod_imovel == cod_imovel).all()
+        query = db.query(Fazenda).filter(Fazenda.cod_imovel == cod_imovel)
+        
+        # Conta o total de registros
+        total = query.count()
+        
+        # Aplica paginação
+        offset = (page - 1) * page_size
+        fazendas = query.offset(offset).limit(page_size).all()
+        
+        return fazendas, total
     
     @staticmethod
     def get_by_id(db: Session, fazenda_id: int) -> Optional[Fazenda]:

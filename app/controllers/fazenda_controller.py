@@ -24,16 +24,18 @@ class FazendaController:
     """
     
     @staticmethod
-    def get_fazenda_by_cod_imovel(db: Session, cod_imovel: str) -> List[FazendaResponse]:
+    def get_fazenda_by_cod_imovel(db: Session, cod_imovel: str, page: int = 1, page_size: int = 10) -> PaginatedResponse[FazendaResponse]:
         """
-        Busca todas as fazendas pelo cod_imovel (pode retornar múltiplos resultados)
+        Busca todas as fazendas pelo cod_imovel (pode retornar múltiplos resultados) com paginação
         
         Args:
             db: Sessão do banco de dados
             cod_imovel: Código do imóvel da fazenda a ser buscada
+            page: Número da página (padrão: 1)
+            page_size: Tamanho da página (padrão: 10)
             
         Returns:
-            List[FazendaResponse]: Lista de fazendas encontradas (pode estar vazia ou conter múltiplos itens)
+            PaginatedResponse[FazendaResponse]: Resposta paginada com fazendas encontradas (pode estar vazia ou conter múltiplos itens)
             
         Raises:
             HTTPException: 
@@ -41,18 +43,30 @@ class FazendaController:
                 - 500: Em caso de erro interno do servidor
         """
         try:
-            # Busca todas as fazendas no repositório (pode retornar múltiplos)
-            fazendas = FazendaRepository.get_by_cod_imovel(db, cod_imovel)
+            # Busca as fazendas no repositório com paginação
+            fazendas, total = FazendaRepository.get_by_cod_imovel(db, cod_imovel, page, page_size)
             
             # Verifica se alguma fazenda foi encontrada
-            if not fazendas:
+            if total == 0:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Fazenda com código {cod_imovel} não encontrada"
                 )
             
             # Converte os models para os schemas de resposta
-            return [FazendaResponse.model_validate(fazenda) for fazenda in fazendas]
+            items = [FazendaResponse.model_validate(fazenda) for fazenda in fazendas]
+            
+            # Calcula o total de páginas
+            total_pages = ceil(total / page_size) if total > 0 else 0
+            
+            # Retorna a resposta paginada
+            return PaginatedResponse[FazendaResponse](
+                items=items,
+                total=total,
+                page=page,
+                page_size=page_size,
+                total_pages=total_pages
+            )
             
         except HTTPException:
             # Re-lança HTTPException (404, etc) para que o FastAPI trate corretamente

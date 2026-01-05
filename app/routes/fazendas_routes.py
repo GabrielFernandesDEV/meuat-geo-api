@@ -14,30 +14,38 @@ router = APIRouter(
 
 @router.get(
     "/{cod_imovel}",
-    response_model=List[FazendaResponse],
+    response_model=PaginatedResponse[FazendaResponse],
     status_code=status.HTTP_200_OK,
     summary="Buscar Fazendas por Código do Imóvel",
-    description="Retorna os dados de todas as fazendas com o código do imóvel especificado (cod_imovel). Pode retornar múltiplos resultados.",
+    description="Retorna os dados de todas as fazendas com o código do imóvel especificado (cod_imovel). Pode retornar múltiplos resultados. "
+                "Parâmetros de paginação podem ser passados via query params: page e page_size.",
     responses=NOT_FOUND_RESPONSE
 )
 async def get_fazenda_by_cod_imovel(
     cod_imovel: str = Path(..., min_length=1, description="Código do imóvel da fazenda (cod_imovel)"),
+    page: int = Query(1, gt=0, description="Número da página (padrão: 1)"),
+    page_size: int = Query(10, gt=0, le=100, description="Quantidade de itens por página (padrão: 10, máximo: 100)"),
     db: Session = Depends(get_db)
-) -> List[FazendaResponse]:
+) -> PaginatedResponse[FazendaResponse]:
     """
-    Endpoint para buscar fazendas pelo código do imóvel (cod_imovel)
+    Endpoint para buscar fazendas pelo código do imóvel (cod_imovel) com paginação
     
     Args:
         cod_imovel: Código do imóvel da fazenda a ser buscada
+        page: Número da página (query param, padrão: 1)
+        page_size: Tamanho da página (query param, padrão: 10, máximo: 100)
         db: Sessão do banco de dados (injetada automaticamente)
         
     Returns:
-        List[FazendaResponse]: Lista de fazendas encontradas (pode conter múltiplos itens)
+        PaginatedResponse[FazendaResponse]: Resposta paginada com fazendas encontradas (pode conter múltiplos itens)
         
     Raises:
         HTTPException: 404 se nenhuma fazenda for encontrada
+        
+    Example:
+        GET /fazendas/SP-3500105-279714F410E746B0B440EFAD4B0933D4?page=1&page_size=10
     """
-    return FazendaController.get_fazenda_by_cod_imovel(db, cod_imovel)
+    return FazendaController.get_fazenda_by_cod_imovel(db, cod_imovel, page, page_size)
 
 
 @router.post(
