@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.controllers.fazenda_controller import FazendaController, NOT_FOUND_RESPONSE
 from app.schemas.fazenda_schema import FazendaResponse, PontoBuscaRequest, RaioBuscaRequest, PaginatedResponse
 from app.infrastructure.database import get_db
+from typing import List
 
 router = APIRouter(
     prefix="/fazendas",
@@ -13,28 +14,28 @@ router = APIRouter(
 
 @router.get(
     "/{cod_imovel}",
-    response_model=FazendaResponse,
+    response_model=List[FazendaResponse],
     status_code=status.HTTP_200_OK,
-    summary="Buscar Fazenda por Código do Imóvel",
-    description="Retorna os dados de uma fazenda específica pelo código do imóvel (cod_imovel)",
+    summary="Buscar Fazendas por Código do Imóvel",
+    description="Retorna os dados de todas as fazendas com o código do imóvel especificado (cod_imovel). Pode retornar múltiplos resultados.",
     responses=NOT_FOUND_RESPONSE
 )
 async def get_fazenda_by_cod_imovel(
     cod_imovel: str = Path(..., min_length=1, description="Código do imóvel da fazenda (cod_imovel)"),
     db: Session = Depends(get_db)
-) -> FazendaResponse:
+) -> List[FazendaResponse]:
     """
-    Endpoint para buscar uma fazenda pelo código do imóvel (cod_imovel)
+    Endpoint para buscar fazendas pelo código do imóvel (cod_imovel)
     
     Args:
         cod_imovel: Código do imóvel da fazenda a ser buscada
         db: Sessão do banco de dados (injetada automaticamente)
         
     Returns:
-        FazendaResponse: Dados da fazenda encontrada
+        List[FazendaResponse]: Lista de fazendas encontradas (pode conter múltiplos itens)
         
     Raises:
-        HTTPException: 404 se a fazenda não for encontrada
+        HTTPException: 404 se nenhuma fazenda for encontrada
     """
     return FazendaController.get_fazenda_by_cod_imovel(db, cod_imovel)
 
