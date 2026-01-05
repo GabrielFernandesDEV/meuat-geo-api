@@ -22,24 +22,24 @@ class FazendaRepository(BaseRepository[Fazenda], GeoRepositoryMixin[Fazenda]):
     
     # Métodos disponíveis através das classes base:
     # - get_by_id(db, fazenda_id) -> Optional[Fazenda] (de BaseRepository)
-    # - get_by_cod_imovel(db, cod_imovel) -> Optional[Fazenda] (busca por cod_imovel)
+    # - get_by_cod_imovel(db, cod_imovel) -> List[Fazenda] (busca por cod_imovel, pode retornar múltiplos)
     # - get_by_point(db, latitude, longitude, page=1, page_size=10) -> Tuple[List[Fazenda], int] (de GeoRepositoryMixin)
     # - get_by_radius(db, latitude, longitude, raio_km, page=1, page_size=10) -> Tuple[List[Fazenda], int] (de GeoRepositoryMixin)
     
     # Métodos estáticos mantidos para compatibilidade com código existente
     @staticmethod
-    def get_by_cod_imovel(db: Session, cod_imovel: str) -> Optional[Fazenda]:
+    def get_by_cod_imovel(db: Session, cod_imovel: str) -> List[Fazenda]:
         """
-        Busca uma fazenda pelo cod_imovel (método estático para compatibilidade)
+        Busca todas as fazendas pelo cod_imovel (pode retornar múltiplos resultados)
         
         Args:
             db: Sessão do banco de dados
             cod_imovel: Código do imóvel da fazenda a ser buscada
             
         Returns:
-            Fazenda se encontrada, None caso contrário
+            Lista de fazendas encontradas (pode estar vazia ou conter múltiplos itens)
         """
-        return db.query(Fazenda).filter(Fazenda.cod_imovel == cod_imovel).first()
+        return db.query(Fazenda).filter(Fazenda.cod_imovel == cod_imovel).all()
     
     @staticmethod
     def get_by_id(db: Session, fazenda_id: int) -> Optional[Fazenda]:

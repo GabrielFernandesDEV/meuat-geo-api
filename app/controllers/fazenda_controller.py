@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from math import ceil
 from app.repositories.fazenda_repository import FazendaRepository
 from app.schemas.fazenda_schema import FazendaResponse, PaginatedResponse
+from typing import List
 
 # Respostas de erro para documentação
 NOT_FOUND_RESPONSE = {
@@ -23,35 +24,35 @@ class FazendaController:
     """
     
     @staticmethod
-    def get_fazenda_by_cod_imovel(db: Session, cod_imovel: str) -> FazendaResponse:
+    def get_fazenda_by_cod_imovel(db: Session, cod_imovel: str) -> List[FazendaResponse]:
         """
-        Busca uma fazenda pelo cod_imovel
+        Busca todas as fazendas pelo cod_imovel (pode retornar múltiplos resultados)
         
         Args:
             db: Sessão do banco de dados
             cod_imovel: Código do imóvel da fazenda a ser buscada
             
         Returns:
-            FazendaResponse: Dados da fazenda encontrada
+            List[FazendaResponse]: Lista de fazendas encontradas (pode estar vazia ou conter múltiplos itens)
             
         Raises:
             HTTPException: 
-                - 404: Se a fazenda não for encontrada
+                - 404: Se nenhuma fazenda for encontrada
                 - 500: Em caso de erro interno do servidor
         """
         try:
-            # Busca a fazenda no repositório
-            fazenda = FazendaRepository.get_by_cod_imovel(db, cod_imovel)
+            # Busca todas as fazendas no repositório (pode retornar múltiplos)
+            fazendas = FazendaRepository.get_by_cod_imovel(db, cod_imovel)
             
-            # Verifica se a fazenda foi encontrada
-            if not fazenda:
+            # Verifica se alguma fazenda foi encontrada
+            if not fazendas:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Fazenda com código {cod_imovel} não encontrada"
                 )
             
-            # Converte o model para o schema de resposta usando from_attributes
-            return FazendaResponse.model_validate(fazenda)
+            # Converte os models para os schemas de resposta
+            return [FazendaResponse.model_validate(fazenda) for fazenda in fazendas]
             
         except HTTPException:
             # Re-lança HTTPException (404, etc) para que o FastAPI trate corretamente

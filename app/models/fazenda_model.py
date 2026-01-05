@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, Float, Text
-from geoalchemy2 import Geometry
+from geoalchemy2 import Geometry, Geography
 from app.infrastructure.database import Base
 
 
@@ -11,6 +11,7 @@ class Fazenda(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     geom = Column('geom', Geometry('GEOMETRY', srid=4326), nullable=True)
+    geog = Column('geog', Geography('GEOMETRY', srid=4326), nullable=True)
     cod_tema = Column(Text, nullable=True)
     nom_tema = Column(Text, nullable=True)
     cod_imovel = Column(Text, nullable=True)

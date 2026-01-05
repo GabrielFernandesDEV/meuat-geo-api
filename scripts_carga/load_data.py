@@ -177,7 +177,7 @@ def create_table_from_schema(engine, schema):
     """
     with engine.begin() as conn:
         # Monta a lista de colunas do schema
-        columns_sql = ["id SERIAL PRIMARY KEY", "geom GEOMETRY(GEOMETRY, 4326)"]
+        columns_sql = ["id SERIAL PRIMARY KEY", "geom GEOMETRY(GEOMETRY, 4326)", "geog GEOGRAPHY(GEOMETRY, 4326)"]
         
         # Adiciona as colunas do schema (dicionário nome: tipo)
         for field_name, field_type in schema.items():
@@ -391,15 +391,24 @@ def load_data(path: str, name_file: str):
             )
             print("   ✅ Índice idx_fazendas_geom criado (geometry)")
             
-            # Índice em geography (otimizado para ST_DWithin e consultas por distância)
+            # Atualiza coluna geog com o valor de geom convertido para geography    
+            conn.execute(
+                text(
+                    "UPDATE fazendas SET geog = geom::geography"
+                )
+            )
+            print("   ✅ Coluna geog atualizada (geography)")
+            
+            # Índice em geography (otimizado para ST_DWithin e consultas por distância Em Metros)
             conn.execute(
                 text(
                     "CREATE INDEX IF NOT EXISTS "
-                    "idx_fazendas_geom_geog "
-                    "ON fazendas USING GIST ((geom::geography))"
+                    "idx_fazendas_geog "
+                    "ON fazendas USING GIST ((geog))"
                 )
             )
-            print("   ✅ Índice idx_fazendas_geom_geog criado (geography)")
+            print("   ✅ Índice idx_fazendas_geog criado (geography)")
+            
 
         elapsed = time.time() - start_time
 

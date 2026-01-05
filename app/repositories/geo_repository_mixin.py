@@ -99,11 +99,11 @@ class GeoRepositoryMixin(Generic[ModelType]):
         longitude: float,
         radius_km: float,
         page: int = 1,
-        page_size: int = 10,
-        geom_field_name: str = "geom"
+        page_size: int = 10
     ) -> Tuple[List[ModelType], int]:
         """
-        Busca entidades dentro de um raio especificado em quilômetros com paginação
+        Busca entidades dentro de um raio especificado em quilômetros com paginação.
+        Usa a coluna geog (geography) para otimizar consultas por distância.
         
         Args:
             db: Sessão do banco de dados
@@ -112,7 +112,6 @@ class GeoRepositoryMixin(Generic[ModelType]):
             radius_km: Raio em quilômetros
             page: Número da página (padrão: 1)
             page_size: Tamanho da página (padrão: 10)
-            geom_field_name: Nome do campo de geometria (padrão: 'geom')
             
         Returns:
             Tupla contendo (lista de entidades paginadas, total de entidades encontradas)
@@ -123,24 +122,23 @@ class GeoRepositoryMixin(Generic[ModelType]):
         # Converte o raio de quilômetros para metros (PostGIS usa metros)
         radius_meters = radius_km * 1000
         
-        # Cria um ponto PostGIS a partir das coordenadas (SRID 4326 = WGS84)
-        ponto = func.ST_SetSRID(
-            func.ST_MakePoint(longitude, latitude),
-            4326
-        )
-        
-        # Obtém o campo de geometria do modelo
-        geom_field = getattr(self.model, geom_field_name)
+        # Obtém o campo de geography do modelo (otimizado para consultas por distância)
+        geog_field = getattr(self.model, "geog")
         
         # Obtém o nome da tabela para referenciar a coluna corretamente
         table_name = self.model.__table__.name
         
         # Cria expressão SQL para o bounding box usando operador && (otimização rápida)
-        # Cria um buffer em geography e converte para geometry para usar com &&
+        # Usa a coluna geog convertida para geometry para o operador &&
         bbox_sql = text(
-            f"{table_name}.{geom_field_name} && "
+            f"{table_name}.geog::geometry && "
             f"ST_Envelope(ST_Buffer(ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography, :radius)::geometry)"
         )
+        
+        # Converte o ponto para geography para usar com ST_DWithin
+        ponto_geog = text(
+            f"ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography"
+        ).bindparams(lon=longitude, lat=latitude)
         
         # Query otimizada com dois filtros:
         # 1. Operador && (bounding box) - filtro rápido que usa índices espaciais
@@ -151,10 +149,10 @@ class GeoRepositoryMixin(Generic[ModelType]):
             and_(
                 bbox_sql.bindparams(lon=longitude, lat=latitude, radius=radius_meters),
                 func.ST_DWithin(
-                    geom_field,
-                    ponto,
-                    radius_meters,
-                    True  # use_spheroid=True
+                    geog_field,
+                    ponto_geog,
+                    radius_meters
+                    # Não passa use_spheroid quando usa geography (padrão é True)
                 )
             )
         )
